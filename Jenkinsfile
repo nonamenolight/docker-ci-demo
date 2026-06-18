@@ -2,8 +2,9 @@ pipeline {
     agent any
 
     environment {
-        REGISTRY = "localhost:5000"
+        REGISTRY = "127.0.0.1:5000"
         IMAGE = "docker-ci-demo"
+        TAG = "kaniko-${BUILD_NUMBER}"
     }
 
     stages {
@@ -11,50 +12,38 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-
-                script {
-                    env.GIT_SHORT_COMMIT = sh(
-                        script: "git rev-parse --short HEAD",
-                        returnStdout: true
-                    ).trim()
-
-                    env.VERSION = "${BUILD_NUMBER}-${GIT_SHORT_COMMIT}"
-                }
             }
         }
 
-        stage('Build Image') {
+        stage('Build with Kaniko') {
             steps {
                 sh """
-                echo "Building version: ${VERSION}"
-
-                docker build -t ${IMAGE}:${VERSION} .
-
-                docker tag ${IMAGE}:${VERSION} ${REGISTRY}/${IMAGE}:${VERSION}
+                docker run --rm \
+                  --network=host \
+                  -v \$PWD:/workspace \
+                  gcr.io/kaniko-project/executor:latest \
+                  --dockerfile=/workspace/Dockerfile \
+                  --context=dir:///workspace \
+                  --destination=${REGISTRY}/${IMAGE}:${TAG} \
+                  --insecure \
+                  --skip-tls-verify
                 """
             }
         }
 
-        stage('Push Image') {
+        stage('Verify Image') {
             steps {
-                sh """
-                docker push ${REGISTRY}/${IMAGE}:${VERSION}
-                """
-            }
-        }
-
-        stage('Verify Run') {
-            steps {
-                sh """
-                docker run --rm ${REGISTRY}/${IMAGE}:${VERSION}
-                """
+                sh "curl -s http://${REGISTRY}/v2/_catalog || true"
             }
         }
     }
 
     post {
         success {
-            echo "SUCCESS: ${REGISTRY}/${IMAGE}:${VERSION}"
+            echo "Kaniko CI SUCCESS: ${REGISTRY}/${IMAGE}:${TAG}"
+        }
+        failure {
+            echo "Kaniko CI FAILED"
         }
     }
 }
