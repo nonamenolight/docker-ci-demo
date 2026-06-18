@@ -1,6 +1,12 @@
 pipeline {
     agent any
 
+    environment {
+        REGISTRY = "localhost:5000"
+        IMAGE = "docker-ci-demo"
+        TAG = "${BUILD_NUMBER}"
+    }
+
     stages {
 
         stage('Checkout') {
@@ -9,25 +15,38 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build Image') {
             steps {
-                sh 'docker build -t docker-ci-demo:latest .'
+                sh """
+                docker build -t ${IMAGE}:${TAG} .
+                docker tag ${IMAGE}:${TAG} ${REGISTRY}/${IMAGE}:${TAG}
+                """
             }
         }
 
-        stage('Run') {
+        stage('Push to Local Registry') {
             steps {
-                sh 'docker run --rm docker-ci-demo:latest'
+                sh """
+                docker push ${REGISTRY}/${IMAGE}:${TAG}
+                """
+            }
+        }
+
+        stage('Run Test Container') {
+            steps {
+                sh """
+                docker run --rm ${REGISTRY}/${IMAGE}:${TAG}
+                """
             }
         }
     }
 
     post {
         success {
-            echo "CI SUCCESS"
+            echo "CI/CD SUCCESS: ${IMAGE}:${TAG}"
         }
         failure {
-            echo "CI FAILED"
+            echo "CI/CD FAILED"
         }
     }
 }
