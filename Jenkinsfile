@@ -10,7 +10,9 @@
 
         stage('Checkout') {
             steps {
-                checkout scm
+                git credentialsId: 'github-ssh-key',
+                    url: 'git@github.com:nonamenolight/docker-ci-demo.git',
+                    branch: 'main'
             }
         }
 
