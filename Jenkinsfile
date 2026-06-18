@@ -4,7 +4,6 @@ pipeline {
     environment {
         REGISTRY = "localhost:5000"
         IMAGE = "docker-ci-demo"
-        TAG = "${BUILD_NUMBER}"
     }
 
     stages {
@@ -12,30 +11,42 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
+
+                script {
+                    env.GIT_SHORT_COMMIT = sh(
+                        script: "git rev-parse --short HEAD",
+                        returnStdout: true
+                    ).trim()
+
+                    env.VERSION = "${BUILD_NUMBER}-${GIT_SHORT_COMMIT}"
+                }
             }
         }
 
         stage('Build Image') {
             steps {
                 sh """
-                docker build -t ${IMAGE}:${TAG} .
-                docker tag ${IMAGE}:${TAG} ${REGISTRY}/${IMAGE}:${TAG}
+                echo "Building version: ${VERSION}"
+
+                docker build -t ${IMAGE}:${VERSION} .
+
+                docker tag ${IMAGE}:${VERSION} ${REGISTRY}/${IMAGE}:${VERSION}
                 """
             }
         }
 
-        stage('Push to Local Registry') {
+        stage('Push Image') {
             steps {
                 sh """
-                docker push ${REGISTRY}/${IMAGE}:${TAG}
+                docker push ${REGISTRY}/${IMAGE}:${VERSION}
                 """
             }
         }
 
-        stage('Run Test Container') {
+        stage('Verify Run') {
             steps {
                 sh """
-                docker run --rm ${REGISTRY}/${IMAGE}:${TAG}
+                docker run --rm ${REGISTRY}/${IMAGE}:${VERSION}
                 """
             }
         }
@@ -43,10 +54,7 @@ pipeline {
 
     post {
         success {
-            echo "CI/CD SUCCESS: ${IMAGE}:${TAG}"
-        }
-        failure {
-            echo "CI/CD FAILED"
+            echo "SUCCESS: ${REGISTRY}/${IMAGE}:${VERSION}"
         }
     }
 }
