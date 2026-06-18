@@ -1,40 +1,33 @@
-
- peline {
+pipeline {
     agent any
-
-    environment {
-        IMAGE = "docker-ci-demo"
-    }
 
     stages {
 
         stage('Checkout') {
             steps {
-                git credentialsId: 'github-ssh-key',
-                    url: 'git@github.com:nonamenolight/docker-ci-demo.git',
-                    branch: 'main'
+                checkout scm
             }
         }
 
-        stage('Build Image') {
+        stage('Build') {
             steps {
-                sh 'docker build -t $IMAGE:latest .'
+                sh 'docker build -t docker-ci-demo:latest .'
             }
         }
 
-        stage('Run Container') {
+        stage('Run') {
             steps {
-                sh 'docker run --rm $IMAGE:latest'
+                sh 'docker run --rm docker-ci-demo:latest'
             }
         }
     }
 
     post {
         success {
-            echo 'CI SUCCESS'
+            echo "CI SUCCESS"
         }
         failure {
-            echo 'CI FAILED'
+            echo "CI FAILED"
         }
     }
 }
