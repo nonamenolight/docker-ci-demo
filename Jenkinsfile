@@ -15,27 +15,24 @@ pipeline {
             }
         }
 
-        stage('Debug Workspace') {
-            steps {
-                sh 'pwd'
-                sh 'ls -R'
-            }
-        }
-        stage('Build with Kaniko') {
+       stage('Build with Kaniko') {
 	    steps {
 		sh '''
+		ls -R $WORKSPACE
+
 		docker run --rm \
 		  --network=host \
-		  -v $WORKSPACE:/workspace \
+		  -v $WORKSPACE:$WORKSPACE \
 		  gcr.io/kaniko-project/executor:latest \
-		  --context=dir:///workspace \
+		  --context=dir://$WORKSPACE \
 		  --dockerfile=Dockerfile \
-		  --destination=127.0.0.1:5000/docker-ci-demo:kaniko-${BUILD_NUMBER} \
+		  --destination=127.0.0.1:5000/docker-ci-demo:${BUILD_NUMBER} \
 		  --insecure \
 		  --skip-tls-verify
 		'''
 	    }
 	}
+        
 
         stage('Verify Image') {
             steps {
