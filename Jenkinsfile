@@ -28,9 +28,9 @@ pipeline {
                   --network=host \
                   -v \$PWD:/workspace \
                   gcr.io/kaniko-project/executor:latest \
-                  --dockerfile=/workspace/Dockerfile \
+                  --dockerfile=Dockerfile \
                   --context=dir:///workspace \
-                  --destination=${REGISTRY}/${IMAGE}:${TAG} \
+                  --destination=127.0.0.1:5000/docker-ci-demo:kaniko-${BUILD_NUMBER} \
                   --insecure \
                   --skip-tls-verify
                 """
