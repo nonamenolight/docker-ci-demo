@@ -35,4 +35,4 @@
             echo 'CI FAILED'
         }
     }
-}CI from Jenkins + Docker")
+}
