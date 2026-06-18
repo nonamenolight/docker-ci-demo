@@ -15,6 +15,12 @@ pipeline {
             }
         }
 
+        stage('Debug Workspace') {
+            steps {
+                sh 'pwd'
+                sh 'ls -R'
+            }
+        }
         stage('Build with Kaniko') {
             steps {
                 sh """
