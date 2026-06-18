@@ -22,20 +22,20 @@ pipeline {
             }
         }
         stage('Build with Kaniko') {
-            steps {
-                sh """
-                docker run --rm \
-                  --network=host \
-                  -v \$PWD:/workspace \
-                  gcr.io/kaniko-project/executor:latest \
-                  --dockerfile=Dockerfile \
-                  --context=dir:///workspace \
-                  --destination=127.0.0.1:5000/docker-ci-demo:kaniko-${BUILD_NUMBER} \
-                  --insecure \
-                  --skip-tls-verify
-                """
-            }
-        }
+	    steps {
+		sh '''
+		docker run --rm \
+		  --network=host \
+		  -v $WORKSPACE:/workspace \
+		  gcr.io/kaniko-project/executor:latest \
+		  --context=dir:///workspace \
+		  --dockerfile=Dockerfile \
+		  --destination=127.0.0.1:5000/docker-ci-demo:kaniko-${BUILD_NUMBER} \
+		  --insecure \
+		  --skip-tls-verify
+		'''
+	    }
+	}
 
         stage('Verify Image') {
             steps {
