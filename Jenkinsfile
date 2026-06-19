@@ -3,28 +3,38 @@ pipeline {
 
     environment {
         REGISTRY = "127.0.0.1:5000"
-        IMAGE = "docker-ci-demo"
-        TAG = "kaniko-${BUILD_NUMBER}"
+        IMAGE_NAME = "docker-ci-demo"
+        IMAGE_TAG = "${BUILD_NUMBER}"
     }
 
     stages {
+
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
 
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-   	stage("Find out workspace"){
- 	    steps {
-		sh '''
-    	    	    echo "WORKSPACE=$WORKSPACE"
-	    	    ls -la $WORKSPACE
-	    	    find $WORKSPACE -name Dockerfile
-		'''
-	    }
-	}
 
-	stage('Build Image with Kaniko') {
+        stage('Detect Dockerfile') {
+            steps {
+                script {
+                    DOCKERFILE_PATH = sh(
+                        script: "find $WORKSPACE -name Dockerfile | head -n 1",
+                        returnStdout: true
+                    ).trim()
+
+                    echo "Dockerfile found at: ${DOCKERFILE_PATH}"
+                }
+            }
+        }
+
+        stage('Build Image with Kaniko') {
             steps {
                 sh """
                 docker run --rm \
@@ -40,21 +50,26 @@ pipeline {
                   --verbosity=info
                 """
             }
-        }     
+        }
 
         stage('Verify Image') {
             steps {
-                sh "curl -s http://${REGISTRY}/v2/_catalog || true"
+                sh """
+                docker images | grep ${IMAGE_NAME} || true
+                """
             }
         }
     }
 
     post {
         success {
-            echo "Kaniko CI SUCCESS: ${REGISTRY}/${IMAGE}:${TAG}"
+            echo "CI SUCCESS: Image pushed successfully"
         }
         failure {
-            echo "Kaniko CI FAILED"
+            echo "CI FAILED"
+        }
+        always {
+            cleanWs()
         }
     }
 }
