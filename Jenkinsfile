@@ -12,6 +12,9 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
+                echo "WORKSPACE=$WORKSPACE"
+		ls -la $WORKSPACE
+		find $WORKSPACE -name Dockerfile
             }
         }
 
