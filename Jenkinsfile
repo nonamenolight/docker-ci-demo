@@ -15,9 +15,13 @@ pipeline {
             }
         }
    	stage("Find out workspace"){
-    	    echo "WORKSPACE=$WORKSPACE"
-	    ls -la $WORKSPACE
-	    find $WORKSPACE -name Dockerfile
+ 	    steps {
+		sh '''
+    	    	    echo "WORKSPACE=$WORKSPACE"
+	    	    ls -la $WORKSPACE
+	    	    find $WORKSPACE -name Dockerfile
+		'''
+	    }
 	}
 
 	stage('Build with Kaniko') {
