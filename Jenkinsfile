@@ -24,21 +24,23 @@ pipeline {
 	    }
 	}
 
-	stage('Build with Kaniko') {
-	    steps {
-		sh '''
-		  docker run --rm \
-		  -v /var/jenkins_home/workspace/docker-ci-demo:/workspace \
-		  gcr.io/kaniko-project/executor:latest \
-		  --context=dir:///workspace \
-		  --dockerfile=Dockerfile \
-		  --destination=127.0.0.1:5000/docker-ci-demo:kaniko-21 \
-		  --insecure \
-		  --skip-tls-verify \
-		  --verbosity=info
-		'''
-	    }
-	}      
+	stage('Build Image with Kaniko') {
+            steps {
+                sh """
+                docker run --rm \
+                  -v $WORKSPACE:/workspace:rw \
+                  gcr.io/kaniko-project/executor:latest \
+                  --context=dir:///workspace \
+                  --dockerfile=${DOCKERFILE_PATH} \
+                  --destination=${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} \
+                  --destination=${REGISTRY}/${IMAGE_NAME}:latest \
+                  --cache=true \
+                  --cache-repo=${REGISTRY}/cache \
+                  --cleanup \
+                  --verbosity=info
+                """
+            }
+        }     
 
         stage('Verify Image') {
             steps {
