@@ -27,15 +27,15 @@ pipeline {
 	stage('Build with Kaniko') {
 	    steps {
 		sh '''
-		docker run --rm \
-		  --network=host \
-		  -v $WORKSPACE:/workspace \
+		  docker run --rm \
+		  -v /var/jenkins_home/workspace/docker-ci-demo:/workspace \
 		  gcr.io/kaniko-project/executor:latest \
 		  --context=dir:///workspace \
-		  --dockerfile=Dockerfile \
-		  --destination=127.0.0.1:5000/docker-ci-demo:kaniko-${BUILD_NUMBER} \
+		  --dockerfile=/workspace/Dockerfile \
+		  --destination=127.0.0.1:5000/docker-ci-demo:kaniko-21 \
 		  --insecure \
-		  --skip-tls-verify
+		  --skip-tls-verify \
+		  --verbosity=info
 		'''
 	    }
 	}      
